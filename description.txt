@@ -1,0 +1,9 @@
+This is a game called Alien Invasion. In this game, the player controls a
+rocket ship that appears at the bottom of the screen. The player can move the 
+rocket ship left and right using the arrow keys and shoot bullets using the
+spacebar. When the game begins, a fleet of aliens appears towards the top of
+the screen and begins to move towards the rocket ship. It is the player's job
+to then shoot and destroy the aliens. If the player destroys all the aliens, a
+new fleet appears that moves faster than the previous fleet. If any alien hits
+the player's ship or reaches the bottom of the screen, the player loses a ship. 
+If the player loses three ships, the game ends. 
