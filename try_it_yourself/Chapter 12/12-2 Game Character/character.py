@@ -1,46 +1,30 @@
 import pygame
 
-# initialize pygame
-pygame.init()
 
-# set a default image position
-DEFAULT_IMAGE_POSITION = (100, 100)
+class Character:
 
-# set window size
-size = (width, height) = (600, 600)
-screen = pygame.display.set_mode(size)
+    def __init__(self, gc_game):
+        self.screen = gc_game.screen
+        self.screen_rect = gc_game.screen.get_rect()
+        self.settings = gc_game.settings
 
-# set the default size for the image
-DEFAULT_IMAGE_SIZE = (200, 200)
+        self.image = pygame.image.load("images/wolf.bmp").convert_alpha()
+        # load image with transparency
 
-# clock
-clock = pygame.time.Clock()
+        self.image = pygame.transform.scale(self.image, (100, 100))
+        # scale the transparent image
 
-# load image with transparency
-image = pygame.image.load("images/wolf.bmp")
-image = image.convert_alpha()
+        colored_bg = pygame.Surface((100, 100)).convert()
+        colored_bg.fill(self.settings.char_bg_color)
+        # create a background surface and fill with desired color
 
-# scale the transparent image first
-image = pygame.transform.scale(image, DEFAULT_IMAGE_SIZE)
+        colored_bg.blit(self.image, (0, 0))
+        self.image = colored_bg
+        # blit the transparent image onto the colored background
 
-# create a background surface and fill with desired color
-bg_color = (255, 0, 255)
-colored_bg = pygame.Surface(DEFAULT_IMAGE_SIZE).convert()
-colored_bg.fill(bg_color)
+        self.rect = self.image.get_rect()
 
-# blit the transparent image onto the color background
-colored_bg.blit(image, (0, 0))
-# now colored_bg has the image with solid background
+        self.rect.center = self.screen_rect.center
 
-
-# MAIN LOOP
-running = True
-while running:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-    screen.fill((0, 255, 0))
-    screen.blit(colored_bg, DEFAULT_IMAGE_POSITION)  # blit final image
-
-    pygame.display.flip()
-    clock.tick(30)
+    def blitme(self):
+        self.screen.blit(self.image, self.rect)
