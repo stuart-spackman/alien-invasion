@@ -1,8 +1,10 @@
 import sys
+from time import sleep
 
 import pygame
 
 from settings import Settings
+from game_stats import GameStats
 from ship import Ship
 from bullet import Bullet
 from alien import Alien
@@ -28,6 +30,9 @@ class AlienInvasion:
         self.settings.screen_height = self.screen.get_rect().height
         # We assign a display window to self.screen so it'll be available to all methods in the class.
 
+        self.stats = GameStats(self)
+        # Create an instance to store game statistics.
+
         pygame.display.set_caption("Alien Invasion")
         # A caption can be displayed in the window.
 
@@ -43,6 +48,9 @@ class AlienInvasion:
         self._create_fleet()
         # We need to populate a fleet of aliens to the screen.
 
+        self.game_active = True
+        # Start Alien Invation in an active state.
+
     def run_game(self):
         """Start the main loop for the game."""
 
@@ -50,16 +58,17 @@ class AlienInvasion:
             self._check_events()
             # We need to check for keyboard and mouse events.
 
-            self.ship.update()
-            # Update the ship's position after checking for keyboard events.
+            if self.game_active:
+                self.ship.update()
+                # Update the ship's position after checking for keyboard events.
 
-            self._update_bullets()
-            # We need to track the bullets the ship has fired.
-            # And delete them when they leave the screen.
+                self._update_bullets()
+                # We need to track the bullets the ship has fired.
+                # And delete them when they leave the screen.
 
-            self._update_aliens()
-            # We need the aliens to move back and forth across the screen.
-            # And drop down after hitting the screen's edge.
+                self._update_aliens()
+                # We need the aliens to move back and forth across the screen.
+                # And drop down after hitting the screen's edge.
 
             self._update_screen()
             # We need to update the screen with images.
@@ -164,6 +173,40 @@ class AlienInvasion:
         """Update the positions of all aliens in the fleet."""
         self._check_fleet_edges()
         self.aliens.update()
+
+        if pygame.sprite.spritecollideany(self.ship, self.aliens):
+            self._ship_hit()
+            # Look for alien-ship collisions.
+
+        self._check_aliens_bottom()
+        # Look for aliens hitting the bottom of the screen.
+
+    def _ship_hit(self):
+        """Respond to the ship being hit by an alien."""
+        if self.stats.ships_left > 0:
+            self.stats.ships_left -= 1
+            # Decrement ships left.
+
+            self.bullets.empty()
+            self.aliens.empty()
+            # Get rid of any remaining bullets and aliens.
+
+            self._create_fleet()
+            self.ship.center_ship()
+            # Create a new fleet and center the ship.
+
+            sleep(0.5)
+            # Pause.
+        else:
+            self.game_active = False
+
+    def _check_aliens_bottom(self):
+        """Check if any aliens have reached the bottom of the screen."""
+        for alien in self.aliens.sprites():
+            if alien.rect.bottom >= self.settings.screen_height:
+                self._ship_hit()
+                break
+                # Treat this the same as if the ship got hit.
 
     def _update_screen(self):
         """Update images on the screen, and flip to the new screen."""
