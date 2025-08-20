@@ -103,6 +103,9 @@ class AlienInvasion:
         self.stats.reset_stats()
         # Reset the game statistics.
 
+        self.settings.initialize_dynamic_settings()
+        # Reset the game settings.
+
         self.game_active = True
 
         self.bullets.empty()
@@ -152,13 +155,13 @@ class AlienInvasion:
 
     def _check_bullet_alien_collisions(self):
         """Respond to bullet-alien collisions."""
-
         collisions = pygame.sprite.groupcollide(self.bullets, self.aliens, True, True)
         # Remove any bullets that have collided.
 
         if not self.aliens:
             self.bullets.empty()
             self._create_fleet()
+            self.settings.increase_speed()
             # Destroy existing bullets and create new fleet.
 
     def _create_fleet(self):
