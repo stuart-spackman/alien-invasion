@@ -22,6 +22,7 @@ class AlienInvasion:
         """Initialize the game and create game resources."""
 
         pygame.init()
+        pygame.mixer.init()
         # This initializes background settings that Pygame needs to function properly.
 
         self.clock = pygame.time.Clock()
@@ -69,6 +70,10 @@ class AlienInvasion:
             self.difficulty_buttons.append(Button(self, str(i), i * 2))
             # Create difficulty buttons.
 
+        self.bullet_sound = pygame.mixer.Sound("sounds/gunshot.wav")
+        self.explosion_sound = pygame.mixer.Sound("sounds/explosion.wav")
+        self.twang_sound = pygame.mixer.Sound("sounds/twang.wav")
+
     def run_game(self):
         """Start the main loop for the game."""
 
@@ -113,6 +118,7 @@ class AlienInvasion:
         """Start a new game when the player clicks Play."""
         button_clicked = self.play_button.rect.collidepoint(mouse_pos)
         if button_clicked and not self.game_active:
+            self.twang_sound.play()
             self.difficulty_select_active = True
 
     def _check_difficulty_buttons(self, mouse_pos):
@@ -124,6 +130,7 @@ class AlienInvasion:
             )
         for i in range(3):
             if buttons_clicked[i] and not self.game_active:
+                self.twang_sound.play()
                 self._start_game(i + 1)
 
     def _start_game(self, difficulty):
@@ -167,12 +174,16 @@ class AlienInvasion:
             and not self.game_active
             and not self.difficulty_select_active
         ):
+            self.twang_sound.play()
             self.difficulty_select_active = True
         elif event.key == pygame.K_1 and self.difficulty_select_active:
+            self.twang_sound.play()
             self._start_game(1)
         elif event.key == pygame.K_2 and self.difficulty_select_active:
+            self.twang_sound.play()
             self._start_game(2)
         elif event.key == pygame.K_3 and self.difficulty_select_active:
+            self.twang_sound.play()
             self._start_game(3)
 
     def _check_keyup_events(self, event):
@@ -187,6 +198,7 @@ class AlienInvasion:
         if len(self.bullets) < self.settings.bullets_allowed:
             new_bullet = Bullet(self)
             self.bullets.add(new_bullet)
+            self.bullet_sound.play()
 
     def _update_bullets(self):
         """Update positions of bullets and get rid of old bullets."""
@@ -202,6 +214,7 @@ class AlienInvasion:
         # Remove any bullets and aliens that have collided.
 
         if collisions:
+            self.explosion_sound.play()
             for aliens in collisions.values():
                 self.stats.score += self.settings.alien_points * len(aliens)
             self.sb.prep_score()
