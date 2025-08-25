@@ -208,14 +208,18 @@ class AlienInvasion:
             self.sb.check_high_score()
 
         if not self.aliens:
-            self.bullets.empty()
-            self._create_fleet()
-            self.settings.increase_speed()
-            # Destroy existing bullets and create new fleet.
+            self._start_new_level()
 
-            self.stats.level += 1
-            self.sb.prep_level()
-            # Increase level.
+    def _start_new_level(self):
+        """Start a new level when all aliens have been destroyed."""
+        self.bullets.empty()
+        self._create_fleet()
+        self.settings.increase_speed()
+        # Destroy existing bullets and create new fleet.
+
+        self.stats.level += 1
+        self.sb.prep_level()
+        # Increase level.
 
     def _create_fleet(self):
         """Create the fleet of aliens."""
