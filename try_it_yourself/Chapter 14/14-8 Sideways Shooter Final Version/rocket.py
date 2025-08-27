@@ -30,7 +30,7 @@ class Rocket:
         """Draw the ship at its current location."""
         self.screen.blit(self.image, self.rect)
 
-    def _center_rocket(self):
+    def center_rocket(self):
         """Center the rocket on the screen."""
         self.rect.midleft = self.screen_rect.midleft
         self.y = float(self.rect.y)

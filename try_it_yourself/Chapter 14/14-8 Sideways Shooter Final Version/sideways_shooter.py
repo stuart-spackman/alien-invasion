@@ -8,6 +8,7 @@ from rocket import Rocket
 from bullet import Bullet
 from alien import Alien
 from game_stats import GameStats
+from button import Button
 
 
 class SidewaysShooter:
@@ -41,8 +42,11 @@ class SidewaysShooter:
 
         self._create_fleet()
 
-        self.game_active = True
+        self.game_active = False
         # Start Alien Invation in an active state.
+
+        # Make the play button.
+        self.play_button = Button(self, "Play")
 
     def run_game(self):
         """Start the main loop for the game."""
@@ -64,6 +68,27 @@ class SidewaysShooter:
                 self._check_keydown_events(event)
             elif event.type == pygame.KEYUP:
                 self._check_keyup_events(event)
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                mouse_pos = pygame.mouse.get_pos()
+                self._check_play_button(mouse_pos)
+
+    def _check_play_button(self, mouse_pos):
+        """Start a new game when the player clicks play."""
+        button_clicked = self.play_button.rect.collidepoint(mouse_pos)
+        if button_clicked and not self.game_active:
+            self.stats.reset_stats()
+            self.game_active = True
+
+            # Get rid of any remaining bullets and aliens.
+            self.bullets.empty()
+            self.aliens.empty()
+
+            # Create a new fleet and center the ship.
+            self._create_fleet()
+            self.rocket.center_rocket()
+
+            # Hide the mouse cursor.
+            pygame.mouse.set_visible(False)
 
     def _check_keydown_events(self, event):
         """Respond to keypresses."""
@@ -166,6 +191,11 @@ class SidewaysShooter:
             bullet.draw_bullet()
         self.rocket.blitme()
         self.aliens.draw(self.screen)
+
+        # Draw the play button if the game is inactive.
+        if not self.game_active:
+            self.play_button.draw_button()
+
         pygame.display.flip()
 
     def _rocket_hit(self):
@@ -179,13 +209,14 @@ class SidewaysShooter:
             # Get rid of any remaining bullets and aliens.
 
             self._create_fleet()
-            self.rocket._center_rocket()
+            self.rocket.center_rocket()
             # Create a new fleet and center the ship.
 
             sleep(0.5)
             # Pause.
         else:
             self.game_active = False
+            pygame.mouse.set_visible(True)
 
     def _check_aliens_side(self):
         """Check if any aliens have reached the side of the screen."""

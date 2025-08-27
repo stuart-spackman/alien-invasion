@@ -9,8 +9,8 @@ class Settings:
         self.bg_color = (230, 230, 230)
         # Screen settings.
 
-        self.rocket_speed = 13
-        self.rocket_limit = 2
+        self.rocket_speed = 6
+        self.rocket_limit = 3
         # Rocket settings.
 
         self.bullet_speed = 6.0
@@ -20,7 +20,7 @@ class Settings:
         self.bullets_allowed = 3
         # Bullet settings.
 
-        self.alien_speed = 13.0
+        self.alien_speed = 6.0
         self.fleet_shift_distance = 33
         self.fleet_direction = 1
         # Alien settings.
