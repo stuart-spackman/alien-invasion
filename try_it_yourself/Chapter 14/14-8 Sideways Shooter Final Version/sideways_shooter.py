@@ -9,6 +9,7 @@ from bullet import Bullet
 from alien import Alien
 from game_stats import GameStats
 from button import Button
+from scoreboard import Scoreboard
 
 
 class SidewaysShooter:
@@ -20,7 +21,9 @@ class SidewaysShooter:
         self.clock = pygame.time.Clock()
         self.settings = Settings()
         # self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
-        self.screen = pygame.display.set_mode((1200, 800))
+        self.screen = pygame.display.set_mode(
+            (self.settings.screen_width, self.settings.screen_height)
+        )
         self.settings.screen_width = self.screen.get_rect().width
         self.settings.screen_height = self.screen.get_rect().height
 
@@ -33,8 +36,9 @@ class SidewaysShooter:
 
         pygame.display.set_caption("Sideways Shooter")
 
+        # Create an instance to store game statistics, and create a scoreboard.
         self.stats = GameStats(self)
-        # Create an instance to store game statistics.
+        self.sb = Scoreboard(self)
 
         self.rocket = Rocket(self)
         self.bullets = pygame.sprite.Group()
@@ -43,10 +47,19 @@ class SidewaysShooter:
         self._create_fleet()
 
         self.game_active = False
+        self.difficulty_buttons_active = False
         # Start Alien Invation in an active state.
 
         # Make the play button.
         self.play_button = Button(self, "Play")
+
+        # Make the difficulty buttons.
+        self.difficulty_buttons = [
+            Button(self, "Difficulty", 0),
+            Button(self, "1", 1),
+            Button(self, "2", 2),
+            Button(self, "3", 3),
+        ]
 
     def run_game(self):
         """Start the main loop for the game."""
@@ -70,25 +83,46 @@ class SidewaysShooter:
                 self._check_keyup_events(event)
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_pos = pygame.mouse.get_pos()
-                self._check_play_button(mouse_pos)
+                if not self.game_active and not self.difficulty_buttons_active:
+                    self._check_play_button(mouse_pos)
+                elif not self.game_active and self.difficulty_buttons_active:
+                    self._check_difficulty_buttons(mouse_pos)
 
     def _check_play_button(self, mouse_pos):
         """Start a new game when the player clicks play."""
         button_clicked = self.play_button.rect.collidepoint(mouse_pos)
         if button_clicked and not self.game_active:
-            self.stats.reset_stats()
-            self.game_active = True
+            self.difficulty_buttons_active = True
 
-            # Get rid of any remaining bullets and aliens.
-            self.bullets.empty()
-            self.aliens.empty()
+    def _check_difficulty_buttons(self, mouse_pos):
+        """Check for mouse events on the difficulty buttons."""
+        for button in self.difficulty_buttons[1:4]:
+            button_clicked = button.rect.collidepoint(mouse_pos)
+            if button_clicked:
+                self.difficulty_buttons_active = False
+                self.game_active = True
+                self._start_game(int(button.msg))
 
-            # Create a new fleet and center the ship.
-            self._create_fleet()
-            self.rocket.center_rocket()
+    def _start_game(self, difficulty=1):
+        """Set off events needed to start a new game."""
+        self.settings.initialize_dynamic_settings(difficulty)
+        self.stats.reset_stats()
+        self.sb.prep_score()
+        self.sb.prep_level()
+        self.sb.prep_rockets()
+        self.game_active = True
 
-            # Hide the mouse cursor.
-            pygame.mouse.set_visible(False)
+        # Get rid of any remaining bullets and aliens.
+        self.bullets.empty()
+        self.aliens.empty()
+
+        # Create a new fleet and center the ship.
+        self._create_fleet()
+        self.rocket.center_rocket()
+
+        # Hide the mouse cursor and the difficulty buttons.
+        pygame.mouse.set_visible(False)
+        self.difficulty_buttons_active = False
 
     def _check_keydown_events(self, event):
         """Respond to keypresses."""
@@ -100,6 +134,15 @@ class SidewaysShooter:
             sys.exit()
         elif event.key == pygame.K_SPACE:
             self._fire_bullet()
+        elif event.key == pygame.K_p:
+            self.difficulty_buttons_active = True
+        elif self.difficulty_buttons_active:
+            if event.key == pygame.K_1:
+                self._start_game(1)
+            elif event.key == pygame.K_2:
+                self._start_game(2)
+            elif event.key == pygame.K_3:
+                self._start_game(3)
 
     def _check_keyup_events(self, event):
         """Respond to key releases."""
@@ -129,10 +172,23 @@ class SidewaysShooter:
         # Check for any bullets that have hit aliens.
         # If so, get rid of the bullet and the alien.
 
+        if collisions:
+            for aliens in collisions.values():
+                self.stats.score += self.settings.alien_points * len(aliens)
+            self.sb.prep_score()
+            self.sb.prep_level()
+            self.sb.prep_rockets()
+            self.sb.check_high_score()
+
         if not self.aliens:
+            # Destroy existing bullets and create a new fleet.
             self.bullets.empty()
             self._create_fleet()
-            # Destroy existing bullets and create a new fleet.
+            self.settings.increase_speed()
+
+            # Increase level.
+            self.stats.level += 1
+            self.sb.prep_level()
 
     def _create_fleet(self):
         """Create a fleet of aliens."""
@@ -185,23 +241,11 @@ class SidewaysShooter:
             alien.rect.x -= self.settings.fleet_shift_distance
         self.settings.fleet_direction *= -1
 
-    def _update_screen(self):
-        self.screen.fill(self.settings.bg_color)
-        for bullet in self.bullets.sprites():
-            bullet.draw_bullet()
-        self.rocket.blitme()
-        self.aliens.draw(self.screen)
-
-        # Draw the play button if the game is inactive.
-        if not self.game_active:
-            self.play_button.draw_button()
-
-        pygame.display.flip()
-
     def _rocket_hit(self):
         """Respond to the rocket being hit by an alien."""
         if self.stats.rockets_left > 0:
             self.stats.rockets_left -= 1
+            self.sb.prep_rockets()
             # Decrement ships left.
 
             self.bullets.empty()
@@ -225,6 +269,24 @@ class SidewaysShooter:
                 self._rocket_hit()
                 break
                 # Treat this the same as if the rocket got hit.
+
+    def _update_screen(self):
+        self.screen.fill(self.settings.bg_color)
+        for bullet in self.bullets.sprites():
+            bullet.draw_bullet()
+        self.rocket.blitme()
+        self.aliens.draw(self.screen)
+
+        # Draw the score information.
+        self.sb.show_score()
+
+        # Draw the play button if the game is inactive.
+        if not self.game_active and not self.difficulty_buttons_active:
+            self.play_button.draw_button()
+        elif not self.game_active and self.difficulty_buttons_active:
+            for button in self.difficulty_buttons:
+                button.draw_button()
+        pygame.display.flip()
 
 
 if __name__ == "__main__":
