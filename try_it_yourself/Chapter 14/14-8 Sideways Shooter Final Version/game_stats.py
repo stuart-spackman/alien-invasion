@@ -5,7 +5,7 @@ class GameStats:
     """Track statistics for Sideways Shooter."""
 
     def __init__(self, ss_game):
-
+        """Initialize the game's statistics from the settings."""
         self.settings = ss_game.settings
         self.path = Path("all_time_high_score.json")
         self.reset_stats()

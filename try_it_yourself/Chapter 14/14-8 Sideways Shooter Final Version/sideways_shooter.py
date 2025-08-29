@@ -21,6 +21,8 @@ class SidewaysShooter:
         pygame.init()
         self.clock = pygame.time.Clock()
         self.settings = Settings()
+
+        # Set up the display without fullscreen mode.
         self.screen = pygame.display.set_mode(
             (self.settings.screen_width, self.settings.screen_height)
         )
@@ -33,6 +35,7 @@ class SidewaysShooter:
         # Create an image to lend to the Alien class.
         self._prep_alien_image()
 
+        # Set the game's caption.
         pygame.display.set_caption("Sideways Shooter")
 
         # Create an instance to store game statistics, and create a scoreboard.
@@ -40,13 +43,15 @@ class SidewaysShooter:
         self.sb = Scoreboard(self)
         self.path = Path("all_time_high_score.json")
 
+        # Load the figures that get used in the game.
         self.rocket = Rocket(self)
         self.bullets = pygame.sprite.Group()
         self.aliens = pygame.sprite.Group()
 
+        # Populate a fleet of aliens to the screen.
         self._create_fleet()
 
-        # Start Alien Invation in an active state.
+        # Start Alien Invation in an inactive state.
         self.game_active = False
         self.difficulty_buttons_active = False
 
@@ -183,22 +188,27 @@ class SidewaysShooter:
             self.sb.check_high_score()
 
         if not self.aliens:
-            # Destroy existing bullets and create a new fleet.
-            self.bullets.empty()
-            self._create_fleet()
-            self.settings.increase_speed()
+            self._start_new_level()
 
-            # Increase level.
-            self.stats.level += 1
-            self.sb.prep_level()
+    def _start_new_level(self):
+        """Start a new level after the fleet of aliens has been destroyed."""
+        # Destroy existing bullets and create a new fleet.
+        self.bullets.empty()
+        self._create_fleet()
+        self.settings.increase_speed()
+
+        # Increase level.
+        self.stats.level += 1
+        self.sb.prep_level()
 
     def _create_fleet(self):
         """Create a fleet of aliens."""
-        alien = Alien(self)
-        alien_width, alien_height = alien.rect.width, alien.rect.height
         # Create an alien and keep adding aliens until there's no room left.
         # Spacing between aliens is one alien height.
+        alien = Alien(self)
+        alien_width, alien_height = alien.rect.width, alien.rect.height
 
+        # Populate a fleet of aliens to the screen.
         current_x, current_y = (
             self.settings.screen_width - 2 * alien_width,
             alien_height,
@@ -227,8 +237,8 @@ class SidewaysShooter:
             self._rocket_hit()
             # Look for alien-ship collisions.
 
-        self._check_aliens_side()
         # Look for aliens hitting the side of the screen.
+        self._check_alien_sides()
 
     def _check_fleet_edges(self):
         """Check if any aliens in the fleet have hit an edge and respond appropriately."""
@@ -264,7 +274,7 @@ class SidewaysShooter:
             self.game_active = False
             pygame.mouse.set_visible(True)
 
-    def _check_aliens_side(self):
+    def _check_alien_sides(self):
         """Check if any aliens have reached the side of the screen."""
         for alien in self.aliens.sprites():
             if alien.rect.left <= 0:
