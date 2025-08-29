@@ -1,5 +1,6 @@
 import sys
 from time import sleep
+from pathlib import Path
 
 import pygame
 
@@ -20,25 +21,24 @@ class SidewaysShooter:
         pygame.init()
         self.clock = pygame.time.Clock()
         self.settings = Settings()
-        # self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
         self.screen = pygame.display.set_mode(
             (self.settings.screen_width, self.settings.screen_height)
         )
         self.settings.screen_width = self.screen.get_rect().width
         self.settings.screen_height = self.screen.get_rect().height
 
-        full_alien = pygame.image.load("images/alien.bmp").convert_alpha()
-        trim_rect = full_alien.get_bounding_rect(min_alpha=1)
-        self.alien_image = full_alien.subsurface(trim_rect).copy()
-        self.alien_image = pygame.transform.scale(self.alien_image, (100, 66))
-        # Auto-trim transparent white space.
+        # Uncomment this for moving to fullscreen mode.
+        # self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+
         # Create an image to lend to the Alien class.
+        self._prep_alien_image()
 
         pygame.display.set_caption("Sideways Shooter")
 
         # Create an instance to store game statistics, and create a scoreboard.
         self.stats = GameStats(self)
         self.sb = Scoreboard(self)
+        self.path = Path("all_time_high_score.json")
 
         self.rocket = Rocket(self)
         self.bullets = pygame.sprite.Group()
@@ -46,9 +46,9 @@ class SidewaysShooter:
 
         self._create_fleet()
 
+        # Start Alien Invation in an active state.
         self.game_active = False
         self.difficulty_buttons_active = False
-        # Start Alien Invation in an active state.
 
         # Make the play button.
         self.play_button = Button(self, "Play")
@@ -76,6 +76,7 @@ class SidewaysShooter:
         """Respond to keypresses and mouse events."""
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                self.path.write_text(str(self.stats.high_score))
                 sys.exit()
             elif event.type == pygame.KEYDOWN:
                 self._check_keydown_events(event)
@@ -131,6 +132,7 @@ class SidewaysShooter:
         elif event.key == pygame.K_DOWN:
             self.rocket.moving_down = True
         elif event.key == pygame.K_q:
+            self.path.write_text(str(self.stats.high_score))
             sys.exit()
         elif event.key == pygame.K_SPACE:
             self._fire_bullet()
@@ -269,6 +271,13 @@ class SidewaysShooter:
                 self._rocket_hit()
                 break
                 # Treat this the same as if the rocket got hit.
+
+    def _prep_alien_image(self):
+        """Prepare the alien image just once to make copying it easier."""
+        full_alien = pygame.image.load("images/alien.bmp").convert_alpha()
+        trim_rect = full_alien.get_bounding_rect(min_alpha=1)
+        self.alien_image = full_alien.subsurface(trim_rect).copy()
+        self.alien_image = pygame.transform.scale(self.alien_image, (100, 66))
 
     def _update_screen(self):
         self.screen.fill(self.settings.bg_color)
